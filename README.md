@@ -1,6 +1,6 @@
 # subfont
 
-generate subsetted wott/wott2 font.
+generate subsetted woff/woff2 font.
 
 ## requirements
 
