@@ -1,11 +1,13 @@
 import argparse
 import html.parser
 import subprocess
+from fontTools.ttLib import TTFont
 from os import remove, walk
-from os.path import basename, isdir, join, lexists, splitext
+from os.path import basename, isdir, isfile, join, lexists, splitext
 from pprint import pprint
 from shlex import quote
 from shutil import get_terminal_size
+from struct import unpack
 from tempfile import NamedTemporaryFile
 
 
@@ -64,6 +66,31 @@ class HTMLParser(html.parser.HTMLParser):
                 (len(self.tagstack[-1]["attrs"]) == 0 or not
                  self.tagstack[-1]["attrs"] <= set(self.ignored_attributes))):
                 self.used_chars.update(*data)
+
+
+def isttc(path):
+    with open(path, "rb") as f:
+        return f.read(4) == b"ttcf"
+
+
+def expose_ttc(src, dest):
+    with open(src, "rb") as f:
+        f.seek(8)
+        count = unpack(">L", f.read(4))
+    for index in range(count):
+        font = TTFont(src, fontNumber=index)
+        if font.sfntVersion == "OTTO":
+            ext = ".otf"
+        elif font.sfntVersion == "\0\1\0\0":
+            ext = ".ttf"
+        elif font.sfntVersion == "wOFF":
+            ext = ".woff"
+        elif font.sfntVersion == "wOF2":
+            ext = ".woff2"
+        else:
+            ext = ""
+        name = font["name"].getDebugName(6) + ext  # 6: postscript name
+        font.save(join(dest, name))
 
 
 _ = argparse.ArgumentParser(add_help=False)
