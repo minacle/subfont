@@ -215,13 +215,20 @@ _.epilog = "example: %(prog)s -f font.otf -- index.html"
 args = _.parse_args()
 
 
-files = args.files[:]
-for item in files[:]:
-    if isdir(item):
-        files_to_add = []
-        for _, _, files in walk(item):
-            files_to_add(files)
-        files.extend(files_to_add)
+def flatpaths(paths):
+    r = paths[:]
+    for item in r:
+        if isdir(item):
+            files_to_add = []
+            for _, _, files in walk(item):
+                files_to_add.append(files)
+            r.extend(files_to_add)
+    return r
+
+fonts = flatpaths(args.fonts)
+fonts.sort()
+
+files = flatpaths(args.files)
 for item in files[:]:
     if splitext(item)[1] not in args.extensions:
         files.remove(item)
